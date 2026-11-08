@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pr-complexity"
+version = "0.1.0"
+description = "Static detection of complexity regressions in Python pull requests using program graphs"
+readme = "README.md"
+authors = [{ name = "Daryl Ejoh" }]
+# tree_sitter_languages 1.10.2 ships prebuilt wheels up to Python 3.12 only.
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "tree_sitter==0.21.3",
+    "tree_sitter_languages==1.10.2",
+    "code_ast==0.1.2",
+    "code_tokenize==0.2.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==8.4.2", "ruff==0.14.3"]
+
+[project.scripts]
+pr-complexity = "pr_complexity.cli:main"
+
+[tool.setuptools.packages.find]
+# Our code lives in src/; the pinned copy of code_graph lives in vendor/.
+where = ["src", "vendor"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = ["ignore::FutureWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["vendor"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]

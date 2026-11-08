@@ -1,0 +1,8 @@
+# Exact versions verified on Python 3.12 (8 November 2026). Regenerate with pip freeze.
+-r requirements.lock
+iniconfig==2.3.1
+packaging==26.3
+pluggy==1.7.0
+Pygments==2.21.0
+pytest==8.4.2
+ruff==0.14.3
