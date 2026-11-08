@@ -66,7 +66,6 @@ vendor/code_graph/   pinned copy of code_graph (see vendor/VENDORED.md)
 examples/single/     labelled functions; first line is "# expected: <class>"
 examples/pairs/      before/after pairs with expected.json
 tests/               pytest suite; complexity tests are xfail until the analysis exists
-AI_USE_LOG.md        record of generative AI use, for the final declaration
 ```
 
 ## Pinned versions and why
