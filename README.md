@@ -17,6 +17,8 @@ The code is never run.
 | Program graphs (code_graph, pinned) behind our own interface | Done |
 | Splitting files into functions and methods | Done |
 | Command line: list functions, summarise and export graphs | Done |
+| Top-level script code wrapped into a function for analysis | Done |
+| CodeComplex dataset: download, loader, statistics | Done |
 | Tests and CI (Linux, Windows, macOS) | Done |
 | Loops, loop bounds, nesting | Weeks 4–6 |
 | Recursion, built-in costs, external-call counting | Weeks 7–8 |
@@ -35,7 +37,28 @@ pip install -e . --no-deps
 pytest
 ```
 
+With uv instead: `uv venv -p 3.12`, then `uv pip install` the same two lines.
+Check `.venv/pyvenv.cfg` if imports fail: a venv made with macOS's built-in
+Python 3.9 installs nothing useful.
+
 No C compiler, git or network access is needed at run time.
+
+## Evaluation data (CodeComplex)
+
+4,900 Python solutions labelled with their time complexity, from
+[sybaik1/CodeComplex-Data](https://github.com/sybaik1/CodeComplex-Data) at a
+pinned commit. The repository states no licence, so the data is downloaded
+into `data/` (git-ignored) rather than committed:
+
+```bash
+python scripts/fetch_codecomplex.py   # downloads and checks the SHA-256
+pr-complexity codecomplex-stats       # programs per class, graph failures
+pytest -m "not dataset"               # skip the ~30 s whole-dataset test
+```
+
+Every program does its work at the top level, so it is analysed as
+`wrap_module(src)` (top-level code as one function, line N → line N + 1)
+plus each function from `split_functions(src)`.
 
 ## Usage
 
@@ -62,6 +85,9 @@ src/pr_complexity/   the tool
   graphs.py          the only module that talks to the graph library
   analysis.py        complexity analysis (not written yet)
   cli.py             command line
+  datasets/          evaluation datasets (CodeComplex loader and statistics)
+scripts/             fetch_codecomplex.py
+data/                downloaded datasets (git-ignored)
 vendor/code_graph/   pinned copy of code_graph (see vendor/VENDORED.md)
 examples/single/     labelled functions; first line is "# expected: <class>"
 examples/pairs/      before/after pairs with expected.json

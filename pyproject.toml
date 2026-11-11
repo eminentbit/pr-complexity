@@ -31,6 +31,7 @@ where = ["src", "vendor"]
 testpaths = ["tests"]
 addopts = "-ra"
 filterwarnings = ["ignore::FutureWarning"]
+markers = ["dataset: needs data/codecomplex/ (python scripts/fetch_codecomplex.py); deselect with -m 'not dataset'"]
 
 [tool.ruff]
 line-length = 100
