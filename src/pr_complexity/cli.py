@@ -3,6 +3,9 @@
     pr-complexity functions FILE              list the functions in a file
     pr-complexity graph FILE [--function F]   summarise a function's program graph
                              [--dot OUT.dot]  and optionally export it
+    pr-complexity codecomplex-stats [--data FILE]
+                                              count programs and graph failures
+                                              in the CodeComplex dataset
 """
 
 from __future__ import annotations
@@ -11,6 +14,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from .datasets.codecomplex import DEFAULT_PATH, dataset_stats, load_codecomplex
 from .graphs import (
     CONTROL_FLOW_EDGES,
     DATA_FLOW_EDGES,
@@ -59,6 +63,31 @@ def _cmd_graph(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_codecomplex_stats(args: argparse.Namespace) -> int:
+    path = Path(args.data)
+    if not path.exists():
+        print(f"error: {path} not found; run: python scripts/fetch_codecomplex.py",
+              file=sys.stderr)
+        return 2
+    programs = load_codecomplex(path)
+    print(f"Building graphs for {len(programs)} programs...", file=sys.stderr)
+    stats = dataset_stats(programs)
+
+    row = "{:<12} {:>9} {:>13} {:>15} {:>15}"
+    print(f"CodeComplex: {path} ({len(programs)} programs)\n")
+    print(row.format("label", "programs", "no functions", "with functions", "graph failures"))
+    for label, s in [*stats.by_label.items(), ("total", stats.total)]:
+        print(row.format(label, s.programs, s.no_functions, s.with_functions, s.failed))
+    print(f"\nCode outside functions (needs wrapping): {stats.module_code} of {len(programs)}")
+    print(f"Module graphs failed: {len(stats.module_failures)} of {len(programs)}")
+    print(f"Function graphs failed: {len(stats.function_failures)} of {stats.functions}")
+    for pid, error in stats.module_failures:
+        print(f"  program {pid}: {error}")
+    for pid, name, error in stats.function_failures:
+        print(f"  program {pid}, {name}: {error}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="pr-complexity", description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -74,6 +103,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--no-syntax", action="store_true",
                    help="leave syntax edges out of the DOT file")
     p.set_defaults(func=_cmd_graph)
+
+    p = sub.add_parser("codecomplex-stats",
+                       help="count programs and graph failures in the CodeComplex dataset")
+    p.add_argument("--data", default=str(DEFAULT_PATH),
+                   help="path to python_data.jsonl (default: %(default)s)")
+    p.set_defaults(func=_cmd_codecomplex_stats)
 
     args = parser.parse_args(argv)
     return args.func(args)

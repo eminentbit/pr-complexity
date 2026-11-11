@@ -1,5 +1,8 @@
 """Program graphs for Python functions.
 
+Top-level script code is handled by wrapping it into a function first
+(:func:`wrap_module`).
+
 This module is the only place that talks to the graph library. The rest of
 the tool works with the small, stable types defined here (ProgramGraph,
 Node, Edge), so the library can be swapped later (python_graphs, Scalpel,
@@ -237,6 +240,20 @@ class FunctionSource:
     source: str  # dedented source of the function
 
 
+_DEFINITIONS = frozenset({"function_definition", "class_definition", "decorated_definition"})
+
+# Statements and clauses whose blocks can hold a def, e.g. a fallback under
+# `except ImportError:` or helpers under `if __name__ == "__main__":`.
+_DEF_CONTAINERS = frozenset({
+    "block",
+    "if_statement", "elif_clause", "else_clause",
+    "for_statement", "while_statement",
+    "try_statement", "except_clause", "except_group_clause", "finally_clause",
+    "with_statement",
+    "match_statement", "case_clause",
+})
+
+
 def split_functions(source: str) -> list[FunctionSource]:
     """Return every function and method in a Python file, including nested ones."""
     data = source.encode("utf-8")
@@ -263,8 +280,79 @@ def split_functions(source: str) -> list[FunctionSource]:
             elif target.type == "class_definition":
                 name = target.child_by_field_name("name").text.decode()
                 walk(target.child_by_field_name("body"), f"{prefix}{name}.")
-            elif child.type in ("block", "if_statement", "try_statement", "with_statement"):
+            elif child.type in _DEF_CONTAINERS:
                 walk(child, prefix)
 
     walk(tree.root_node, "")
     return found
+
+
+# --------------------------------------------------------------------------
+# Wrapping top-level code into a function
+# --------------------------------------------------------------------------
+
+MODULE_FUNCTION = "__module__"
+
+# Removed only at module level: `from __future__` and `import *` are not
+# allowed inside a function, and imports cost nothing for this analysis.
+_MODULE_IMPORTS = frozenset({
+    "import_statement", "import_from_statement", "future_import_statement",
+})
+
+
+def _module_removals(node, top: bool = True):
+    """Yield, in source order, the nodes wrap_module replaces with ``pass``:
+    functions and classes not nested in another one, and top-level imports."""
+    for child in node.children:
+        if child.type in _DEFINITIONS or (top and child.type in _MODULE_IMPORTS):
+            yield child
+        elif child.type in _DEF_CONTAINERS:
+            yield from _module_removals(child, top=False)
+
+
+def has_module_code(source: str) -> bool:
+    """True if the file does work outside its functions (not just defining
+    functions and classes, importing, or a docstring)."""
+    tree = get_parser("python").parse(source.encode("utf-8"))
+    for child in tree.root_node.named_children:
+        if child.type in _DEFINITIONS | _MODULE_IMPORTS | {"comment"}:
+            continue
+        inner = [c.type for c in child.named_children]
+        if child.type == "expression_statement" and inner == ["string"]:
+            continue  # docstring
+        return True
+    return False
+
+
+def wrap_module(source: str) -> str:
+    """Turn a file's top-level code into one function, ``__module__``.
+
+    code_graph builds graphs of functions, but scripts (such as every
+    CodeComplex program) do their work at the top level. Functions, classes
+    and top-level imports are each replaced by ``pass``; analyse them
+    separately with :func:`split_functions`.
+
+    Line breaks inside a replaced node are kept as backslash continuations,
+    so line N of ``source`` is line N + 1 of the result, and a statement after
+    a semicolon (``import sys; n = 1``) stays where it was. Tabs are expanded
+    to 8 columns, as Python does, and code is indented by 4 more columns.
+
+    Raises GraphBuildError if valid source does not end up entirely inside
+    ``__module__``.
+    """
+    data = source.expandtabs(8).encode("utf-8")
+    tree = get_parser("python").parse(data)
+    parts, pos = [], 0
+    for node in _module_removals(tree.root_node):
+        parts.append(data[pos:node.start_byte])
+        parts.append(b"pass" + b"\\\n" * data.count(b"\n", node.start_byte, node.end_byte))
+        pos = node.end_byte
+    parts.append(data[pos:])
+    body = textwrap.indent(b"".join(parts).decode("utf-8"), "    ")
+    wrapped = f"def {MODULE_FUNCTION}():\n{body}\n    pass\n"
+
+    root = get_parser("python").parse(wrapped.encode("utf-8")).root_node
+    outside = [c for c in root.named_children if c.type not in ("comment", "line_continuation")]
+    if not root.has_error and len(outside) != 1:
+        raise GraphBuildError(f"top-level code did not stay inside {MODULE_FUNCTION}()")
+    return wrapped
