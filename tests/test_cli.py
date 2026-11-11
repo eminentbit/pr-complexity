@@ -37,3 +37,24 @@ def test_codecomplex_stats_command(tmp_path, capsys):
 def test_codecomplex_stats_missing_file(tmp_path, capsys):
     assert main(["codecomplex-stats", "--data", str(tmp_path / "missing.jsonl")]) == 2
     assert "fetch_codecomplex.py" in capsys.readouterr().err
+
+
+def test_codecomplex_eval_command(tmp_path, capsys):
+    data = tmp_path / "python_data.jsonl"
+    data.write_text(
+        '{"src": "for i in range(int(input())):\\n    print(i)\\n", "complexity": "linear",'
+        ' "problem": "0001_A", "from": "CODEFORCES", "tags": "math"}\n'
+        '{"src": "def f():\\n    pass\\nf()\\n", "complexity": "constant",'
+        ' "problem": "0002_B", "from": "CODEFORCES", "tags": "math"}\n',
+        encoding="utf-8",
+    )
+    out_csv = tmp_path / "predictions.csv"
+    assert main(["codecomplex-eval", "--data", str(data), "--split", "all",
+                 "--predictions", str(out_csv)]) == 0
+    out = capsys.readouterr().out
+    assert "all split (2 programs, 2 problems)" in out
+    assert "Confusion matrix, with functions" in out
+    lines = out_csv.read_text().splitlines()
+    assert lines[0] == "id,problem,split,group,label,predicted"
+    assert lines[1].startswith("0,0001_A,") and ",no functions,O(n)," in lines[1]
+    assert ",with functions,O(1)," in lines[2]
