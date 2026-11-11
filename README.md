@@ -19,6 +19,7 @@ The code is never run.
 | Command line: list functions, summarise and export graphs | Done |
 | Top-level script code wrapped into a function for analysis | Done |
 | CodeComplex dataset: download, loader, statistics | Done |
+| Dev/test split and evaluation command | Done |
 | Tests and CI (Linux, Windows, macOS) | Done |
 | Loops, loop bounds, nesting | Weeks 4–6 |
 | Recursion, built-in costs, external-call counting | Weeks 7–8 |
@@ -53,8 +54,20 @@ into `data/` (git-ignored) rather than committed:
 ```bash
 python scripts/fetch_codecomplex.py   # downloads and checks the SHA-256
 pr-complexity codecomplex-stats       # programs per class, graph failures
-pytest -m "not dataset"               # skip the ~30 s whole-dataset test
+pr-complexity codecomplex-eval        # accuracy on the dev split
+pytest -m "not dataset"               # skip the ~30 s whole-dataset tests
 ```
+
+The programs are split into **dev** (3,895 programs, 216 problems) for
+developing and tuning the analysis and **test** (1,005 programs, 61
+problems) for final results only (`codecomplex-eval --split test`). All
+programs for one problem are on the same side, because most problems have a
+single label. Each label's share is the same on both sides, overall and
+within the "no functions" and "with functions" groups (see
+`assign_splits`). `codecomplex-eval` reports coverage (answers other than
+"unknown"), accuracy, accuracy averaged per problem (problems range from 1 to
+138 programs) and confusion matrices; `--predictions out.csv` saves one row
+per program.
 
 Every program does its work at the top level, so it is analysed as
 `wrap_module(src)` (top-level code as one function, line N → line N + 1)
@@ -84,6 +97,7 @@ graph.edge_counts()                  # Counter of edge kinds
 src/pr_complexity/   the tool
   graphs.py          the only module that talks to the graph library
   analysis.py        complexity analysis (not written yet)
+  evaluation.py      scoring predictions: accuracy, coverage, confusion matrices
   cli.py             command line
   datasets/          evaluation datasets (CodeComplex loader and statistics)
 scripts/             fetch_codecomplex.py

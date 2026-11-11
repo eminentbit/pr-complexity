@@ -13,8 +13,10 @@ at all, so each program is analysed as a wrapped module
 
 from __future__ import annotations
 
+import hashlib
 import json
-from collections.abc import Iterable
+from collections import Counter, defaultdict
+from collections.abc import Hashable, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -37,6 +39,11 @@ LABELS = {
 }
 
 
+SPLITS = ("dev", "test")
+TEST_FRACTION = 0.2
+SPLIT_SEED = "codecomplex-split-v1"  # changing it changes the test set
+
+
 @dataclass(frozen=True)
 class Program:
     id: int  # 0-based row in the file; `problem` is not unique
@@ -44,26 +51,89 @@ class Program:
     label: str  # one of LABELS.values()
     problem: str  # Codeforces problem, e.g. "0005_D"
     tags: tuple[str, ...]  # Codeforces tags, e.g. ("dp", "greedy")
+    has_functions: bool  # defines at least one function (reported separately)
+    split: str  # "dev" (develop and tune on this) or "test" (final results only)
 
 
 def load_codecomplex(path: str | Path = DEFAULT_PATH) -> list[Program]:
-    programs = []
+    rows = []
     with open(path, encoding="utf-8") as f:
         for line_no, line in enumerate(f, start=1):
             if not line.strip():
                 continue
             row = json.loads(line)
-            raw = row["complexity"]
-            if raw not in LABELS:
-                raise ValueError(f"{path}:{line_no}: unknown complexity label {raw!r}")
-            programs.append(Program(
-                id=len(programs),
-                src=row["src"],
-                label=LABELS[raw],
-                problem=row["problem"],
-                tags=tuple(t.strip() for t in row["tags"].split(",") if t.strip()),
-            ))
-    return programs
+            if row["complexity"] not in LABELS:
+                raise ValueError(
+                    f"{path}:{line_no}: unknown complexity label {row['complexity']!r}")
+            row["has_functions"] = bool(split_functions(row["src"]))
+            rows.append(row)
+
+    splits = assign_splits((row["problem"], (row["complexity"], row["has_functions"]))
+                           for row in rows)
+    return [
+        Program(
+            id=i,
+            src=row["src"],
+            label=LABELS[row["complexity"]],
+            problem=row["problem"],
+            tags=tuple(t.strip() for t in row["tags"].split(",") if t.strip()),
+            has_functions=row["has_functions"],
+            split=splits[row["problem"]],
+        )
+        for i, row in enumerate(rows)
+    ]
+
+
+def assign_splits(rows: Iterable[tuple[str, Hashable]]) -> dict[str, str]:
+    """Map each problem to "dev" or "test", given (problem, stratum) pairs.
+
+    The loader's stratum is (label, has_functions), so each label's share
+    matches between dev and test both overall and within the two groups
+    that are reported separately.
+
+    Every program of a problem goes to the same side: 235 of the 277
+    problems have a single label, so a split by row would let the test set
+    share problems with the data the analysis was tuned on.
+
+    Problems are visited in a fixed pseudo-random order (SHA-256 of
+    SPLIT_SEED and the problem) and moved into or out of the test set
+    whenever that brings every stratum's test count closer to TEST_FRACTION
+    of its programs, until no move helps. A simple random split would leave
+    labels unbalanced, because O(log n), O(n^3) and exponential programs
+    come from few, large problems.
+    """
+    per_problem: dict[str, Counter] = defaultdict(Counter)
+    for problem, stratum in rows:
+        per_problem[problem][stratum] += 1
+    totals = sum(per_problem.values(), Counter())
+    target = {stratum: TEST_FRACTION * n for stratum, n in totals.items()}
+
+    def error(counts: Counter) -> float:
+        return sum((counts[stratum] - t) ** 2 for stratum, t in target.items())
+
+    order = sorted(per_problem,
+                   key=lambda p: hashlib.sha256(f"{SPLIT_SEED}:{p}".encode()).hexdigest())
+    test: set[str] = set()
+    in_test: Counter = Counter()
+    changed = True
+    while changed:  # terminates: every move strictly lowers the error
+        changed = False
+        for p in order:
+            moved = in_test - per_problem[p] if p in test else in_test + per_problem[p]
+            if error(moved) < error(in_test):
+                test ^= {p}
+                in_test = moved
+                changed = True
+    return {p: "test" if p in test else "dev" for p in per_problem}
+
+
+def select(programs: Iterable[Program], split: str) -> list[Program]:
+    """Programs in ``split`` ("dev", "test" or "all")."""
+    if split == "all":
+        return list(programs)
+    if split not in SPLITS:
+        raise ValueError(f"unknown split {split!r}")
+    return [p for p in programs if p.split == split]
 
 
 # --------------------------------------------------------------------------
