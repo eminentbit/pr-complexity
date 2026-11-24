@@ -1,0 +1,199 @@
+[
+ {
+  "file": "single/binary_search.py",
+  "function": "binary_search",
+  "ok": true,
+  "ms": 119.8,
+  "loops": [
+   {
+    "kind": "while_statement",
+    "line": 3,
+    "cycle": true
+   }
+  ],
+  "param_to_loop": [],
+  "nodes": 87,
+  "edges": 237
+ },
+ {
+  "file": "single/constant_range.py",
+  "function": "first_ten",
+  "ok": true,
+  "ms": 1.8,
+  "loops": [
+   {
+    "kind": "for_statement",
+    "line": 3,
+    "cycle": true
+   }
+  ],
+  "param_to_loop": [],
+  "nodes": 38,
+  "edges": 93
+ },
+ {
+  "file": "single/for_parameter.py",
+  "function": "total",
+  "ok": true,
+  "ms": 1.5,
+  "loops": [
+   {
+    "kind": "for_statement",
+    "line": 3,
+    "cycle": true
+   }
+  ],
+  "param_to_loop": [
+   "orders"
+  ],
+  "nodes": 35,
+  "edges": 90
+ },
+ {
+  "file": "single/halving_while.py",
+  "function": "halvings",
+  "ok": true,
+  "ms": 3.4,
+  "loops": [
+   {
+    "kind": "while_statement",
+    "line": 3,
+    "cycle": true
+   }
+  ],
+  "param_to_loop": [
+   "n"
+  ],
+  "nodes": 40,
+  "edges": 106
+ },
+ {
+  "file": "single/input_bound.py",
+  "function": "read_and_print",
+  "ok": true,
+  "ms": 1.7,
+  "loops": [
+   {
+    "kind": "for_statement",
+    "line": 2,
+    "cycle": true
+   }
+  ],
+  "param_to_loop": [],
+  "nodes": 46,
+  "edges": 97
+ },
+ {
+  "file": "single/loops_in_sequence.py",
+  "function": "summary",
+  "ok": true,
+  "ms": 3.2,
+  "loops": [
+   {
+    "kind": "for_statement",
+    "line": 3,
+    "cycle": true
+   },
+   {
+    "kind": "for_statement",
+    "line": 6,
+    "cycle": true
+   },
+   {
+    "kind": "for_statement",
+    "line": 7,
+    "cycle": true
+   }
+  ],
+  "param_to_loop": [
+   "xs"
+  ],
+  "nodes": 65,
+  "edges": 180
+ },
+ {
+  "file": "single/merge_sort.py",
+  "function": "merge_sort",
+  "ok": true,
+  "ms": 6.6,
+  "loops": [
+   {
+    "kind": "while_statement",
+    "line": 9,
+    "cycle": true
+   }
+  ],
+  "param_to_loop": [],
+  "nodes": 197,
+  "edges": 556
+ },
+ {
+  "file": "single/nested_loops.py",
+  "function": "count_equal_pairs",
+  "ok": true,
+  "ms": 2.0,
+  "loops": [
+   {
+    "kind": "for_statement",
+    "line": 3,
+    "cycle": true
+   },
+   {
+    "kind": "for_statement",
+    "line": 4,
+    "cycle": true
+   }
+  ],
+  "param_to_loop": [
+   "xs"
+  ],
+  "nodes": 48,
+  "edges": 130
+ },
+ {
+  "file": "single/sorted_call.py",
+  "function": "ordered",
+  "ok": true,
+  "ms": 1.0,
+  "loops": [],
+  "param_to_loop": [],
+  "nodes": 19,
+  "edges": 42
+ },
+ {
+  "file": "pairs/attach_customers/after.py",
+  "function": "attach_customers",
+  "ok": true,
+  "ms": 2.3,
+  "loops": [
+   {
+    "kind": "for_statement",
+    "line": 2,
+    "cycle": true
+   }
+  ],
+  "param_to_loop": [
+   "orders"
+  ],
+  "nodes": 59,
+  "edges": 147
+ },
+ {
+  "file": "pairs/attach_customers/before.py",
+  "function": "attach_customers",
+  "ok": true,
+  "ms": 2.1,
+  "loops": [
+   {
+    "kind": "for_statement",
+    "line": 3,
+    "cycle": true
+   }
+  ],
+  "param_to_loop": [
+   "orders"
+  ],
+  "nodes": 63,
+  "edges": 153
+ }
+]

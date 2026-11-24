@@ -1,0 +1,209 @@
+[
+ {
+  "file": "single/binary_search.py",
+  "function": "binary_search",
+  "ok": true,
+  "ms_file": 0.6,
+  "loops": [
+   [
+    7,
+    4,
+    "while lo < hi:"
+   ],
+   [
+    9,
+    4,
+    "while lo < hi:"
+   ]
+  ],
+  "outside_names_in_headers": [],
+  "ssa_ok": true
+ },
+ {
+  "file": "single/constant_range.py",
+  "function": "first_ten",
+  "ok": true,
+  "ms_file": 0.2,
+  "loops": [
+   [
+    5,
+    4,
+    "for i in range(10):"
+   ]
+  ],
+  "outside_names_in_headers": [
+   "range"
+  ],
+  "ssa_ok": true
+ },
+ {
+  "file": "single/for_parameter.py",
+  "function": "total",
+  "ok": true,
+  "ms_file": 0.1,
+  "loops": [
+   [
+    5,
+    4,
+    "for o in orders:"
+   ]
+  ],
+  "outside_names_in_headers": [
+   "orders"
+  ],
+  "ssa_ok": true
+ },
+ {
+  "file": "single/halving_while.py",
+  "function": "halvings",
+  "ok": true,
+  "ms_file": 0.1,
+  "loops": [
+   [
+    5,
+    4,
+    "while n > 1:"
+   ]
+  ],
+  "outside_names_in_headers": [],
+  "ssa_ok": true
+ },
+ {
+  "file": "single/input_bound.py",
+  "function": "read_and_print",
+  "ok": true,
+  "ms_file": 0.3,
+  "loops": [
+   [
+    4,
+    3,
+    "for _ in range(int(input())):"
+   ]
+  ],
+  "outside_names_in_headers": [
+   "input",
+   "int",
+   "range"
+  ],
+  "ssa_ok": true
+ },
+ {
+  "file": "single/loops_in_sequence.py",
+  "function": "summary",
+  "ok": true,
+  "ms_file": 0.1,
+  "loops": [
+   [
+    5,
+    4,
+    "for x in xs:"
+   ],
+   [
+    8,
+    7,
+    "for a in xs:"
+   ],
+   [
+    10,
+    8,
+    "for b in xs:"
+   ]
+  ],
+  "outside_names_in_headers": [
+   "xs"
+  ],
+  "ssa_ok": true
+ },
+ {
+  "file": "single/merge_sort.py",
+  "function": "merge_sort",
+  "ok": true,
+  "ms_file": 0.7,
+  "loops": [
+   [
+    10,
+    7,
+    "while i < len(left) and j < len(right):"
+   ],
+   [
+    12,
+    7,
+    "while i < len(left) and j < len(right):"
+   ]
+  ],
+  "outside_names_in_headers": [
+   "len"
+  ],
+  "ssa_ok": true
+ },
+ {
+  "file": "single/nested_loops.py",
+  "function": "count_equal_pairs",
+  "ok": true,
+  "ms_file": 0.1,
+  "loops": [
+   [
+    5,
+    4,
+    "for a in xs:"
+   ],
+   [
+    7,
+    5,
+    "for b in xs:"
+   ],
+   [
+    9,
+    5,
+    "for b in xs:"
+   ]
+  ],
+  "outside_names_in_headers": [
+   "xs"
+  ],
+  "ssa_ok": true
+ },
+ {
+  "file": "single/sorted_call.py",
+  "function": "ordered",
+  "ok": true,
+  "ms_file": 0.1,
+  "loops": [],
+  "outside_names_in_headers": [],
+  "ssa_ok": true
+ },
+ {
+  "file": "pairs/attach_customers/after.py",
+  "function": "attach_customers",
+  "ok": true,
+  "ms_file": 0.2,
+  "loops": [
+   [
+    4,
+    3,
+    "for o in orders:"
+   ]
+  ],
+  "outside_names_in_headers": [
+   "orders"
+  ],
+  "ssa_ok": true
+ },
+ {
+  "file": "pairs/attach_customers/before.py",
+  "function": "attach_customers",
+  "ok": true,
+  "ms_file": 0.2,
+  "loops": [
+   [
+    5,
+    4,
+    "for o in orders:"
+   ]
+  ],
+  "outside_names_in_headers": [
+   "orders"
+  ],
+  "ssa_ok": true
+ }
+]
