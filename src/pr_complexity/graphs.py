@@ -95,6 +95,7 @@ class Node:
     kind: str  # "syntax", "token" or "symbol"
     label: str  # syntax type (e.g. "for_statement") or token/symbol text
     line: int | None = None  # 1-based line in the analysed source
+    column: int | None = None  # 0-based column, to order nodes on the same line
 
 
 @dataclass(frozen=True)
@@ -212,14 +213,16 @@ def _convert(raw, lang: str, source: str) -> ProgramGraph:
     for raw_node in raw_nodes:
         nid = node_id(raw_node)
         if isinstance(raw_node, SymbolNode):
-            kind, label, line = "symbol", str(raw_node.node_name()), None
+            kind, label, line, column = "symbol", str(raw_node.node_name()), None, None
         elif isinstance(raw_node, TokenNode):
             ast = raw_node.token.ast_node
-            kind, label, line = "token", raw_node.token.text, ast.start_point[0] + 1
+            kind, label = "token", raw_node.token.text
+            line, column = ast.start_point[0] + 1, ast.start_point[1]
         else:
             ast = raw_node.ast_node
-            kind, label, line = "syntax", ast.type, ast.start_point[0] + 1
-        graph.nodes[nid] = Node(id=nid, kind=kind, label=label, line=line)
+            kind, label = "syntax", ast.type
+            line, column = ast.start_point[0] + 1, ast.start_point[1]
+        graph.nodes[nid] = Node(id=nid, kind=kind, label=label, line=line, column=column)
 
     for raw_node in raw_nodes:
         for _, edge_kind, target in raw_node.successors():

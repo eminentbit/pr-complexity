@@ -17,6 +17,13 @@ def test_graph_command_writes_dot(tmp_path, capsys):
     assert "control-flow" in capsys.readouterr().out
 
 
+def test_loops_command(capsys):
+    assert main(["loops", str(EXAMPLE)]) == 0
+    out = capsys.readouterr().out
+    assert "count_equal_pairs: 2 loop(s)" in out
+    assert "for (depth 2)" in out
+
+
 def test_unknown_function(capsys):
     assert main(["graph", str(EXAMPLE), "--function", "missing"]) == 2
 

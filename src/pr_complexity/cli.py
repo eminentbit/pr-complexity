@@ -3,6 +3,7 @@
     pr-complexity functions FILE              list the functions in a file
     pr-complexity graph FILE [--function F]   summarise a function's program graph
                              [--dot OUT.dot]  and optionally export it
+    pr-complexity loops FILE [--function F]   list the loops of each function
     pr-complexity codecomplex-stats [--data FILE] [--split S]
                                               count programs and graph failures
                                               in the CodeComplex dataset
@@ -36,6 +37,7 @@ from .graphs import (
     build_graph,
     split_functions,
 )
+from .loops import find_loops
 
 
 def _cmd_functions(args: argparse.Namespace) -> int:
@@ -73,6 +75,27 @@ def _cmd_graph(args: argparse.Namespace) -> int:
                 out = out.with_name(f"{out.stem}.{fn.name}{out.suffix}")
             out.write_text(graph.to_dot(include_syntax=not args.no_syntax), encoding="utf-8")
             print(f"  wrote {out}")
+    return 0
+
+
+def _cmd_loops(args: argparse.Namespace) -> int:
+    functions = split_functions(Path(args.file).read_text(encoding="utf-8"))
+    if args.function:
+        functions = [f for f in functions if f.name == args.function]
+        if not functions:
+            print(f"error: no function named {args.function!r}", file=sys.stderr)
+            return 2
+    for fn in functions:
+        try:
+            graph = build_graph(fn.source)
+        except GraphBuildError as exc:
+            print(f"{fn.name}: {exc}")
+            continue
+        loops = find_loops(graph)
+        print(f"{fn.name}: {len(loops)} loop(s)")
+        for loop in loops:
+            line = fn.start_line + loop.line - 1
+            print(f"  line {line}: {'  ' * (loop.depth - 1)}{loop.kind} (depth {loop.depth})")
     return 0
 
 
@@ -184,6 +207,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--no-syntax", action="store_true",
                    help="leave syntax edges out of the DOT file")
     p.set_defaults(func=_cmd_graph)
+
+    p = sub.add_parser("loops", help="list the loops of each function in a Python file")
+    p.add_argument("file")
+    p.add_argument("--function", help="only this function (e.g. 'total' or 'Cls.method')")
+    p.set_defaults(func=_cmd_loops)
 
     p = sub.add_parser("codecomplex-stats",
                        help="count programs and graph failures in the CodeComplex dataset")

@@ -21,9 +21,10 @@ The code is never run.
 | CodeComplex dataset: download, loader, statistics | Done |
 | Dev/test split and evaluation command | Done |
 | Tests and CI (Linux, Windows, macOS) | Done |
-| Loops, loop bounds, nesting | Weeks 4–6 |
-| Recursion, built-in costs, external-call counting | Weeks 7–8 |
-| Comparison with the previous version, pull request comment | Weeks 9–11 |
+| Loop detection: for/while from control flow, comprehensions, nesting (T3.1) | Done |
+| Loop bounds, nesting and sequence rules, built-in costs (T3.2–T3.4) | Weeks 9–14 |
+| External-call counting (T4) | Weeks 11–16 |
+| Comparison with the previous version, pull request comment (T5) | Weeks 16–19 |
 
 ## Setup
 
@@ -78,6 +79,7 @@ plus each function from `split_functions(src)`.
 ```bash
 pr-complexity functions examples/single/merge_sort.py
 pr-complexity graph examples/single/for_parameter.py --dot total.dot --no-syntax
+pr-complexity loops examples/single/nested_loops.py
 dot -Tpng total.dot -o total.png     # needs Graphviz
 ```
 
@@ -96,6 +98,7 @@ graph.edge_counts()                  # Counter of edge kinds
 ```
 src/pr_complexity/   the tool
   graphs.py          the only module that talks to the graph library
+  loops.py           finds loops: natural loops in the control flow, plus comprehensions
   analysis.py        complexity analysis (not written yet)
   evaluation.py      scoring predictions: accuracy, coverage, confusion matrices
   cli.py             command line
@@ -107,6 +110,10 @@ examples/single/     labelled functions; first line is "# expected: <class>"
 examples/pairs/      before/after pairs with expected.json
 tests/               pytest suite; complexity tests are xfail until the analysis exists
 ```
+
+## Decisions
+
+- [D1: graph library](docs/d1-graph-library-decision.md): keep code_graph; Scalpel was compared and not adopted.
 
 ## Pinned versions and why
 
