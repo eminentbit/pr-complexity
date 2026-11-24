@@ -234,18 +234,32 @@ class DataFlowVisitor(ASTVisitor):
         self._last_writes = defaultdict(set)
 
     def visit_if_statement(self, node):
+        # PATCHED for pr-complexity (see vendor/VENDORED.md): walk every
+        # elif/else branch, not only the first, each starting from the state
+        # after the condition; with no else, the path that takes no branch is
+        # kept as well.
         with _context(self, "read"):
             self.walk(node.child_by_field_name("condition"))
 
-        last_rw_context = self._copy_rw_context()
+        before = self._copy_rw_context()
+
+        def fresh_copy():
+            return (copy(before[0]), copy(before[1]))
 
         self.walk(node.child_by_field_name("consequence"))
+        branch_ends = [self._restore_rw_context(fresh_copy())]
 
-        after_rw_context = self._restore_rw_context(last_rw_context)
+        has_else = False
+        for alternative in node.children_by_field_name("alternative"):
+            has_else = has_else or alternative.type == "else_clause"
+            self.walk(alternative)
+            branch_ends.append(self._restore_rw_context(fresh_copy()))
 
-        self.walk(node.child_by_field_name("alternative"))
-
-        self._join_rw_context(after_rw_context)
+        if has_else:
+            # no path skips every branch: start from the first branch's state
+            self._restore_rw_context(branch_ends.pop(0))
+        for rw_context in branch_ends:
+            self._join_rw_context(rw_context)
 
         return False
 

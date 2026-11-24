@@ -6,7 +6,7 @@
 | Commit | `b03efd896de44a188d2c8777350b3571e673bede` (15 December 2022, latest at time of copying) |
 | Copied on | 8 November 2026 |
 | Licence | MIT (see `code_graph/LICENSE`) |
-| Changes | None. The files are byte-for-byte copies of that commit. |
+| Changes | Four control-flow and data-flow fixes in `pylang/cfg.py` and `pylang/dataflow.py` (24 November 2026, see below). Everything else is a byte-for-byte copy of that commit. |
 
 ## Why it is vendored instead of installed with pip
 
@@ -31,3 +31,23 @@ grammars in `tree_sitter_languages==1.10.2`.
 On 8 November 2026 this was checked against a grammar compiled from
 tree-sitter-python tag `v0.20.4`: all seven Table 1 examples produced identical
 graphs (same node counts and edge counts of every kind).
+
+## Fixes made to the copy
+
+Running loop detection (T3.1) on all 4,900 CodeComplex programs showed 124 of
+13,280 function graphs where a `for` or `while` loop had no control flow at
+all. Four bugs in code_graph caused all but 8 of them; the remaining 8 are
+loops whose body always ends in `break` or `return`, so they never repeat and
+are correctly not reported as loops. Each changed method is marked
+`PATCHED for pr-complexity`, and `tests/test_code_graph_patches.py` fails on
+the original code and passes on the fixed copy.
+
+| # | Bug | Effect | Fix |
+|---|---|---|---|
+| 1 | `visit_if_statement` read only the first `alternative` child, but tree-sitter puts every `elif` and the `else` under that field | In `if ... elif ... else`, the `else` branch had no control flow (`ControlFlowVisitor`, `SubControlFlowVisitor`) and no data flow (`DataFlowVisitor`) | Walk every alternative, each starting from the state after the condition |
+| 2 | With `elif` but no `else`, the path that takes no branch was dropped | Code after `if ...: return` / `elif ...: return` looked unreachable | Keep that path when there is no `else` |
+| 3 | The generic `visit()` treats every `*_statement` as a single step, including `with_statement` | The body of a `with` block had no control flow | Added `visit_with_statement` to `ControlFlowVisitor` |
+| 4 | `break`/`continue` in a loop's `else` clause were recorded against that loop and then discarded | `for ... else: continue` lost the outer loop's back edge | Restore the enclosing loop's lists before walking the `else` clause (`ControlFlowVisitor`) |
+
+Effect on CodeComplex: function graphs with a loop missing from the control
+flow went from 124 to the 8 that never repeat.

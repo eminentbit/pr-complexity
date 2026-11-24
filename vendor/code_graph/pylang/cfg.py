@@ -53,17 +53,26 @@ class ControlFlowVisitor(ASTVisitor):
         return False
 
     def visit_if_statement(self, node):
+        # PATCHED for pr-complexity (see vendor/VENDORED.md): an if statement
+        # can have several alternatives (elif ... else), all under the field
+        # "alternative"; the original walked only the first. Every branch is
+        # now walked, and with no else the path that takes no branch is kept.
         self._add_next(node)
 
         # Consequences
         self.walk(node.child_by_field_name("consequence"))
-        left_last_stmts = self._reset_last_stmts((node,))
+        branch_ends = self._reset_last_stmts((node,))
 
-        # Alternative
-        self.walk(node.child_by_field_name("alternative"))
-        right_last_stmts = self._reset_last_stmts((node,))
+        # Alternatives
+        has_else = False
+        for alternative in node.children_by_field_name("alternative"):
+            has_else = has_else or alternative.type == "else_clause"
+            self.walk(alternative)
+            branch_ends += self._reset_last_stmts((node,))
+        if not has_else:
+            branch_ends += (node,)
 
-        self._last_stmts = left_last_stmts + right_last_stmts
+        self._last_stmts = tuple(dict.fromkeys(branch_ends))
         return False
 
     def visit_return_statement(self, node):
@@ -90,6 +99,9 @@ class ControlFlowVisitor(ASTVisitor):
         return False
 
     def visit_for_statement(self, node):
+        # PATCHED for pr-complexity (see vendor/VENDORED.md): break and
+        # continue inside the loop's else clause belong to the enclosing
+        # loop, so the enclosing loop's lists are restored before walking it.
 
         prev_break, prev_continue = self._break_from, self._continue_from
         self._break_from, self._continue_from = [], []
@@ -99,14 +111,18 @@ class ControlFlowVisitor(ASTVisitor):
         self._last_stmts += tuple(self._continue_from)
         self._add_next(node)
 
+        own_breaks = self._break_from
+        self._break_from, self._continue_from = prev_break, prev_continue
+
         self.walk(node.child_by_field_name("alternative"))
 
-        self._last_stmts += tuple(self._break_from)
-
-        self._break_from, self._continue_from = prev_break, prev_continue
+        self._last_stmts += tuple(own_breaks)
         return False
 
     def visit_while_statement(self, node):
+        # PATCHED for pr-complexity (see vendor/VENDORED.md): break and
+        # continue inside the loop's else clause belong to the enclosing
+        # loop, so the enclosing loop's lists are restored before walking it.
 
         prev_break, prev_continue = self._break_from, self._continue_from
         self._break_from, self._continue_from = [], []
@@ -116,11 +132,12 @@ class ControlFlowVisitor(ASTVisitor):
         self._last_stmts += tuple(self._continue_from)
         self._add_next(node)
 
+        own_breaks = self._break_from
+        self._break_from, self._continue_from = prev_break, prev_continue
+
         self.walk(node.child_by_field_name("alternative"))
 
-        self._last_stmts += tuple(self._break_from)
-
-        self._break_from, self._continue_from = prev_break, prev_continue
+        self._last_stmts += tuple(own_breaks)
         return False
     
     def visit_try_statement(self, node):
@@ -148,6 +165,14 @@ class ControlFlowVisitor(ASTVisitor):
         for finally_clause in finally_clauses:
             self.walk(finally_clause)
 
+        return False
+
+    def visit_with_statement(self, node):
+        # PATCHED for pr-complexity (see vendor/VENDORED.md): the generic
+        # visit() below treats every *_statement as one step, so the body of a
+        # with block was never part of the control flow.
+        self._add_next(node)
+        self.walk(node.child_by_field_name("body"))
         return False
 
     def visit(self, node):
@@ -233,18 +258,24 @@ class SubControlFlowVisitor(ControlFlowVisitor):
 
     # If statement ----------------------------------------------------------------
     def visit_if_statement(self, node):
+        # PATCHED for pr-complexity: walk every elif/else branch (see above).
         self.walk(node.child_by_field_name("condition"))
         stmt_after_test = self._last_stmts
 
         # Consequences
         self.walk(node.child_by_field_name("consequence"))
-        left_last_stmts = self._reset_last_stmts(stmt_after_test)
+        branch_ends = self._reset_last_stmts(stmt_after_test)
 
-        # Alternative
-        self.walk(node.child_by_field_name("alternative"))
-        right_last_stmts = self._reset_last_stmts(stmt_after_test)
+        # Alternatives
+        has_else = False
+        for alternative in node.children_by_field_name("alternative"):
+            has_else = has_else or alternative.type == "else_clause"
+            self.walk(alternative)
+            branch_ends += self._reset_last_stmts(stmt_after_test)
+        if not has_else:
+            branch_ends += stmt_after_test
 
-        self._last_stmts = left_last_stmts + right_last_stmts
+        self._last_stmts = tuple(dict.fromkeys(branch_ends))
         return False
 
     def visit_conditional_expression(self, node):
