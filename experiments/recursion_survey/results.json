@@ -1,0 +1,178 @@
+{
+ "programs": 4900,
+ "recursive_programs": 263,
+ "recursion_defined_but_never_called": 74,
+ "by_label": {
+  "O(1)": {
+   "recursive": 15,
+   "total": 791
+  },
+  "O(log n)": {
+   "recursive": 48,
+   "total": 669
+  },
+  "O(n log n)": {
+   "recursive": 15,
+   "total": 796
+  },
+  "O(n)": {
+   "recursive": 18,
+   "total": 853
+  },
+  "O(n^2)": {
+   "recursive": 20,
+   "total": 657
+  },
+  "O(n^3)": {
+   "recursive": 91,
+   "total": 606
+  },
+  "exponential": {
+   "recursive": 56,
+   "total": 528
+  }
+ },
+ "by_shape": {
+  "memoised": {
+   "programs": 113,
+   "labels": {
+    "O(n^3)": 76,
+    "exponential": 17,
+    "O(n)": 10,
+    "O(n^2)": 9,
+    "O(log n)": 1
+   }
+  },
+  "call inside a loop": {
+   "programs": 39,
+   "labels": {
+    "exponential": 17,
+    "O(n^3)": 8,
+    "O(n^2)": 6,
+    "O(n)": 3,
+    "O(log n)": 2,
+    "O(n log n)": 2,
+    "O(1)": 1
+   }
+  },
+  "one call, argument shrinks by a constant": {
+   "programs": 6,
+   "labels": {
+    "exponential": 3,
+    "O(log n)": 2,
+    "O(1)": 1
+   }
+  },
+  "one call, argument halves": {
+   "programs": 24,
+   "labels": {
+    "O(log n)": 15,
+    "O(n log n)": 4,
+    "O(n^3)": 3,
+    "O(n)": 2
+   }
+  },
+  "several calls, argument halves": {
+   "programs": 20,
+   "labels": {
+    "O(log n)": 18,
+    "O(n log n)": 1,
+    "O(n^2)": 1
+   }
+  },
+  "several calls, argument shrinks by a constant": {
+   "programs": 5,
+   "labels": {
+    "O(n^2)": 2,
+    "exponential": 2,
+    "O(n^3)": 1
+   }
+  },
+  "mutual recursion": {
+   "programs": 7,
+   "labels": {
+    "exponential": 4,
+    "O(1)": 1,
+    "O(log n)": 1,
+    "O(n^3)": 1
+   }
+  },
+  "shrinkage not visible": {
+   "programs": 55,
+   "labels": {
+    "exponential": 16,
+    "O(1)": 13,
+    "O(log n)": 10,
+    "O(n log n)": 8,
+    "O(n)": 3,
+    "O(n^3)": 3,
+    "O(n^2)": 2
+   }
+  }
+ },
+ "examples": {
+  "memoised": [
+   1208,
+   1506,
+   1508,
+   1509,
+   1510,
+   1511
+  ],
+  "call inside a loop": [
+   662,
+   987,
+   1247,
+   1723,
+   1868,
+   2022
+  ],
+  "one call, argument shrinks by a constant": [
+   611,
+   1271,
+   1324,
+   4437,
+   4453,
+   4482
+  ],
+  "one call, argument halves": [
+   828,
+   856,
+   1034,
+   1056,
+   1060,
+   1062
+  ],
+  "several calls, argument halves": [
+   940,
+   1049,
+   1050,
+   1051,
+   1073,
+   1078
+  ],
+  "several calls, argument shrinks by a constant": [
+   3205,
+   3628,
+   4034,
+   4434,
+   4714
+  ],
+  "mutual recursion": [
+   662,
+   1247,
+   3849,
+   4720,
+   4721,
+   4722
+  ],
+  "shrinkage not visible": [
+   78,
+   94,
+   96,
+   97,
+   98,
+   104
+  ]
+ }
+}

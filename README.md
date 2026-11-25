@@ -114,6 +114,7 @@ tests/               pytest suite; complexity tests are xfail until the analysis
 ## Decisions
 
 - [D1: graph library](docs/d1-graph-library-decision.md): keep code_graph; Scalpel was compared and not adopted.
+- [D2: recursion](docs/d2-recursion-decision.md): detect recursion and report "unknown (recursive)"; do not estimate it.
 
 ## Pinned versions and why
 
